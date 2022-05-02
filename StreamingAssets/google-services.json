@@ -1,0 +1,41 @@
+{
+  "project_info": {
+    "project_number": "369633791599",
+    "firebase_url": "https://space-travel-e7556.firebaseio.com",
+    "project_id": "space-travel-e7556",
+    "storage_bucket": "space-travel-e7556.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:369633791599:android:2070eee5ed744edb7f479a",
+        "android_client_info": {
+          "package_name": "com.EfimMaksimov.SpaceTravel"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "369633791599-od7m1k89dvhd79cga1b38fihe2j6954l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwJzIEaudgTyUtamjIdEBzVZhzY_X-vGg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "369633791599-od7m1k89dvhd79cga1b38fihe2j6954l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      },
+      "admob_app_id": "ca-app-pub-9979138468274880~1888496933"
+    }
+  ],
+  "configuration_version": "1"
+}

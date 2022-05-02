@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>Space Travel</title>
+        <style type="text/css">
+            html, body {
+                width: 100%;
+                height: 100%;
+                padding: 0px;
+                margin: 0px;
+            }
+            #loading {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                font-size: 20px;
+                z-index: 10;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="unity-canvas" style="width: 100%; height: 100%; background: #FFFFFF; position: absolute; top: 0px; left: 0px;"></canvas>
+        <div id="loading"><span id="loading-text"></span></div>
+        <script src="Build/Space Travel 5.loader.js"></script>
+        <script src="./instant-games-bridge.js"></script>
+        <script>
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                // Mobile device style: fill the whole browser client area with the game canvas:
+                var meta = document.createElement('meta')
+                meta.name = 'viewport'
+                meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes'
+                document.getElementsByTagName('head')[0].appendChild(meta)
+            }
+
+            let canvas = document.getElementById('unity-canvas')
+            let loading = document.getElementById('loading')
+            let loadingText = document.getElementById('loading-text')
+
+            window.initialize = function(options) {
+                try {
+                    options = JSON.parse(options)
+                }
+                catch (e) {
+                    options = null
+                }
+
+                instantGamesBridge
+                    .initialize(options)
+                    .then(() => {
+                        instantGamesBridge.advertisement.on(
+                            'interstitial_state_changed', 
+                            state => { unityInstance.SendMessage('InstantGamesBridge', 'OnInterstitialStateChanged', state) })
+
+                        instantGamesBridge.advertisement.on(
+                            'rewarded_state_changed', 
+                            state => { unityInstance.SendMessage('InstantGamesBridge', 'OnRewardedStateChanged', state) })
+
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnInitializationCompleted', 'true')
+                    })
+                    .catch(error => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnInitializationCompleted', 'false')
+                    })
+            }
+
+            window.getPlatformId = function() {
+                return instantGamesBridge.platform.id
+            }
+
+            window.getPlatformLanguage = function() {
+                return instantGamesBridge.platform.language
+            }
+
+            window.getPlatformPayload = function() {
+                let payload = instantGamesBridge.platform.payload
+                if (typeof payload === 'string')
+                    return payload
+                else
+                    return ''
+            }
+
+
+            // player
+            window.getIsPlayerAuthorizationSupported = function() {
+                return instantGamesBridge.player.isAuthorizationSupported.toString()
+            }
+
+            window.getIsPlayerAuthorized = function() {
+                return instantGamesBridge.player.isAuthorized.toString()
+            }
+
+            window.getPlayerId = function() {
+                if (instantGamesBridge.player.id)
+                    return instantGamesBridge.player.id.toString()
+
+                return ''
+            }
+
+            window.getPlayerName = function() {
+                if (instantGamesBridge.player.name)
+                    return instantGamesBridge.player.name.toString()
+
+                return ''
+            }
+
+            window.getPlayerPhotos = function() {
+                if (instantGamesBridge.player.photos.length > 0)
+                    return JSON.stringify(instantGamesBridge.player.photos)
+
+                return ''
+            }
+
+            window.authorizePlayer = function() {
+                instantGamesBridge.player.authorize()
+                    .then(() => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnAuthorizeCompleted', 'true')
+                    })
+                    .catch(error => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnAuthorizeCompleted', 'false')
+                    })
+            }
+
+
+            // game
+            window.getGameData = function(key) {
+                instantGamesBridge.game.getData(key)
+                    .then(data => {
+                        if (data) {
+                            if (typeof data !== 'string')
+                                data = JSON.stringify(data)
+
+                            unityInstance.SendMessage('InstantGamesBridge', 'OnGetGameDataCompleted', data)
+                        } else {
+                            unityInstance.SendMessage('InstantGamesBridge', 'OnGetGameDataCompleted', '')
+                        }
+                    })
+                    .catch(error => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnGetGameDataCompleted', '')
+                    })
+            }
+
+            window.setGameData = function(key, value) {
+                instantGamesBridge.game.setData(key, value)
+                    .then(() => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnSetGameDataCompleted', 'true')
+                    })
+                    .catch(error => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnSetGameDataCompleted', 'false')
+                    })
+            }
+
+            window.deleteGameData = function(key) {
+                instantGamesBridge.game.deleteData(key)
+                    .then(() => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnDeleteGameDataCompleted', 'true')
+                    })
+                    .catch(error => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnDeleteGameDataCompleted', 'false')
+                    })
+            }
+
+
+            // advertisement
+            window.getMinimumDelayBetweenInterstitial = function() {
+                instantGamesBridge.advertisement.minimumDelayBetweenInterstitial
+            }
+
+            window.setMinimumDelayBetweenInterstitial = function(seconds) {
+                instantGamesBridge.advertisement.setMinimumDelayBetweenInterstitial(seconds)
+            }
+
+            window.showInterstitial = function(ignoreDelay) {
+                let interstitialOptions = { ignoreDelay }
+
+                instantGamesBridge.advertisement.showInterstitial(interstitialOptions)
+                    .then(() => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnShowInterstitialCompleted', 'true')
+                    })
+                    .catch(error => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnShowInterstitialCompleted', 'false')
+                    })
+            }
+
+            window.showRewarded = function() {
+                instantGamesBridge.advertisement.showRewarded()
+                    .then(() => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnShowRewardedCompleted', 'true')
+                    })
+                    .catch(error => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnShowRewardedCompleted', 'false')
+                    })
+            }
+
+
+            // social
+            window.getIsShareSupported = function() {
+                return instantGamesBridge.social.isShareSupported.toString()
+            }
+
+            window.getIsInviteFriendsSupported = function() {
+                return instantGamesBridge.social.isInviteFriendsSupported.toString()
+            }
+
+            window.getIsJoinCommunitySupported = function() {
+                return instantGamesBridge.social.isJoinCommunitySupported.toString()
+            }
+
+            window.getIsCreatePostSupported = function() {
+                return instantGamesBridge.social.isCreatePostSupported.toString()
+            }
+
+            window.getIsAddToHomeScreenSupported = function() {
+                return instantGamesBridge.social.isAddToHomeScreenSupported.toString()
+            }
+
+            window.getIsAddToFavoritesSupported = function() {
+                return instantGamesBridge.social.isAddToFavoritesSupported.toString()
+            }
+
+            window.share = function() {
+                instantGamesBridge.social.share()
+                    .then(() => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnShareCompleted', 'true')
+                    })
+                    .catch(error => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnShareCompleted', 'false')
+                    })
+            }
+
+            window.inviteFriends = function() {
+                instantGamesBridge.social.inviteFriends()
+                    .then(() => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnInviteFriendsCompleted', 'true')
+                    })
+                    .catch(error => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnInviteFriendsCompleted', 'false')
+                    })
+            }
+
+            window.joinCommunity = function() {
+                instantGamesBridge.social.joinCommunity()
+                    .then(() => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnJoinCommunityCompleted', 'true')
+                    })
+                    .catch(error => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnJoinCommunityCompleted', 'false')
+                    })
+            }
+
+            window.createPost = function(text) {
+                instantGamesBridge.social.createPost(text)
+                    .then(() => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnCreatePostCompleted', 'true')
+                    })
+                    .catch(error => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnCreatePostCompleted', 'false')
+                    })
+            }
+
+            window.addToHomeScreen = function() {
+                instantGamesBridge.social.addToHomeScreen()
+                    .then(() => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnAddToHomeScreenCompleted', 'true')
+                    })
+                    .catch(error => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnAddToHomeScreenCompleted', 'false')
+                    })
+            }
+
+            window.addToFavorites = function() {
+                instantGamesBridge.social.addToFavorites()
+                    .then(() => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnAddToFavoritesCompleted', 'true')
+                    })
+                    .catch(error => {
+                        unityInstance.SendMessage('InstantGamesBridge', 'OnAddToFavoritesCompleted', 'false')
+                    })
+            }
+
+
+            window.onUnityLoadingProgressChanged = function(progress) {
+                loadingText.innerHTML = Math.ceil(progress * 100) + '%'
+            }
+            
+            createUnityInstance(
+                document.querySelector('#unity-canvas'), 
+                {
+                    dataUrl: 'Build/Space Travel 5.data.unityweb',
+                    frameworkUrl: 'Build/Space Travel 5.framework.js.unityweb',
+                    codeUrl: 'Build/Space Travel 5.wasm.unityweb',
+                    streamingAssetsUrl: 'StreamingAssets',
+                    companyName: 'Efim Maksimov',
+                    productName: 'Space Travel',
+                    productVersion: '1.3.1',
+                    // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
+                    // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
+                },
+                onUnityLoadingProgressChanged)
+            .then((unityInstance) => {
+                window.unityInstance = unityInstance
+                loading.remove()
+            })
+            .catch((error) => {
+                loadingText.innerHTML = error
+            })
+
+            window.addEventListener('pointerdown', () => {
+                window.focus()
+                canvas.focus()
+            })
+        </script>
+    </body>
+</html>
